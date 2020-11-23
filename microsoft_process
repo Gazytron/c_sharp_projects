@@ -1,0 +1,158 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.ServiceProcess;
+using System.Text;
+using System.Threading.Tasks;
+using System.Timers;
+using System.Xml;
+
+namespace ups_print
+{
+    public partial class Service1 : ServiceBase
+    {
+        Timer Timer = new Timer();
+        int Interval = 4600;
+        public Service1()
+        {
+            InitializeComponent();
+            
+        }
+
+        protected override void OnStart(string[] args)
+        {
+            // WriteLog();
+            Timer.Elapsed += new ElapsedEventHandler(OnElapsedTime);
+            Timer.Interval = Interval;
+            Timer.Enabled = true;
+        }
+
+        private void OnElapsedTime(object source, ElapsedEventArgs e)
+        {
+          WriteLog();
+        }
+
+        protected override void OnStop()
+        {
+            Timer.Stop();
+        }
+        private void WriteLog()
+        {
+            //10/28 Added archiving capability
+            string main_dir = @"***";
+            string printer1 = @"***";
+            string printer2 = @"***";
+            string printer3 = @"***";
+            string archive = @"***";
+            DateTime dateTime = DateTime.UtcNow.Date;
+            string date = dateTime.ToString("MMddyyyy");
+            
+            
+
+
+            string[] files = Directory.GetFiles(@main_dir,
+            "*.xml",
+            SearchOption.TopDirectoryOnly);
+
+            Array.Sort(files);
+
+            //scans printer1 folder
+            string[] files2 = Directory.GetFiles(@printer1,
+           "*.*",
+           SearchOption.TopDirectoryOnly);
+
+            //scans printer2 folder           
+            string[] files3 = Directory.GetFiles(@printer2,
+           "*.*",
+           SearchOption.TopDirectoryOnly);
+
+            //scans printer3 folder           
+            string[] files4 = Directory.GetFiles(@printer3,
+           "*.*",
+           SearchOption.TopDirectoryOnly);
+
+            // from main to printer folders
+            if (files.Length > 0)
+            {
+                FileInfo mFile = new FileInfo(@files[0]);
+                XmlDocument xDoc = new XmlDocument();
+                xDoc.Load(@files[0]);
+                XmlNodeList name = xDoc.GetElementsByTagName("LabelID");
+                if (name.Count > 0 && name[0].InnerText == "1")
+                {
+                    System.IO.File.Move(@files[0], @printer1 + mFile.Name);
+                }
+                else if (name.Count > 0 && name[0].InnerText == "2")
+                {
+                    System.IO.File.Move(@files[0], @printer2 + mFile.Name);
+                }
+                else
+                {
+                    System.IO.File.Move(@files[0], @printer3 + mFile.Name);
+                }
+            }
+            
+
+            //from printer1 to main folders and to archive
+            foreach (string file2 in files2)
+            {
+                FileInfo mFile2 = new FileInfo(@file2);
+
+                if (mFile2.Extension.ToLower() == ".out")
+                {
+                    System.IO.File.Copy(@file2, main_dir + @"\" + mFile2.Name);
+                    
+                    System.IO.File.Move(@file2, archive + @"\" + mFile2.Name.Substring(0, mFile2.Name.Length - 4) + "_" + date + ".out");
+                }
+                if (mFile2.Extension.ToLower() == ".xxx")
+                {
+                    System.IO.File.Move(@file2, main_dir + @"\" + mFile2.Name);
+                }
+            }
+
+            //from printer2 to main folders and to archive
+            foreach (string file3 in files3)
+            {
+                FileInfo mFile3 = new FileInfo(@file3);
+
+                if (mFile3.Extension.ToLower() == ".out")
+                {
+                    System.IO.File.Copy(@file3, main_dir + @"\" + mFile3.Name);
+                    System.IO.File.Move(@file3, archive + @"\" + mFile3.Name.Substring(0, mFile3.Name.Length - 4) + "_" + date + ".out");
+                }
+                if (mFile3.Extension.ToLower() == ".xxx")
+                {
+                    System.IO.File.Move(@file3, main_dir + @"\" + mFile3.Name);
+                }
+            }
+
+            //from printer3 to main folders and to archive
+            foreach (string file4 in files4)
+            {
+                FileInfo mFile4 = new FileInfo(@file4);
+
+                if (mFile4.Extension.ToLower() == ".out")
+                {
+                    System.IO.File.Copy(@file4, main_dir + @"\" + mFile4.Name);
+                    System.IO.File.Move(@file4, archive + @"\" + mFile4.Name.Substring(0, mFile4.Name.Length-4) +"_"+date+".out");
+
+                }
+                if (mFile4.Extension.ToLower() == ".xxx")
+                {
+                    System.IO.File.Move(@file4, main_dir + @"\" + mFile4.Name);
+
+                }
+            }
+            
+        }
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+
+        }
+    }
+}
