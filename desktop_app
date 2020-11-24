@@ -1,0 +1,1129 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.Common;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using Oracle.ManagedDataAccess.Client;
+using System.Data.OleDb;
+using System.Data.Odbc;
+
+namespace VERS_QUERY
+{
+    public partial class Form1 : Form
+    {
+        OdbcConnection odbcon = new OdbcConnection("Driver={Microsoft Access Driver (*.mdb)}; dbq=any_db.mdb");
+        
+        private void branch_details()
+            {
+            dataGridView2.Rows.Clear();
+            OdbcCommand cmd7 = new OdbcCommand();
+            odbcon.Open();
+            cmd7.CommandText = "select * from branch_list";
+            cmd7.Connection = odbcon;
+            OdbcDataReader dr7 = cmd7.ExecuteReader();
+
+                while (dr7.Read())
+                {
+                
+                    string[] row = new string[]  { dr7.GetInt32(1).ToString(), dr7.GetString(6), dr7.GetString(2)+" "+dr7.GetString(3), dr7.GetString(5), dr7.GetString(4) };
+                 dataGridView2.Rows.Add(row);
+                }
+            odbcon.Close();
+            }
+        
+        
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+        String connectionString = "Data Source = (DESCRIPTION = " +
+                                "(ADDRESS = (PROTOCOL = TCP)(HOST = host_name)(PORT = 1521))" +
+                                "(CONNECT_DATA =" +
+                                "(SERVER = DEDICATED)" +
+                                "(SERVICE_NAME = service_name)" +
+                                ")" +
+                "); User Id = username;password=password;";
+
+
+        private void textBox3_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+
+            String trim = textBox1.Text.Trim();
+            //this.dataGridView1.DataSource = null;
+            this.dataGridView1.Rows.Clear();
+            this.dataGridView2.Rows.Clear();
+            textBox2.Text = "";
+            textBox5.Text = ""; textBox6.Text = ""; textBox7.Text = ""; textBox8.Text = "";
+            textBox49.Text = ""; textBox50.Text = "";
+            comboBox3.Items.Clear();
+            comboBox4.Items.Clear();
+            OracleConnection con = new OracleConnection();
+            con.ConnectionString = connectionString;
+            con.Open();
+            OracleCommand cmd = new OracleCommand();
+            cmd.CommandText = "select * from anytable";
+            cmd.Parameters.Add("mrn", trim);
+            cmd.Connection = con;
+            cmd.CommandType = CommandType.Text;
+            OracleDataReader dr = cmd.ExecuteReader();
+
+            while (dr.Read())
+            {
+                string status = "";
+                string type = "";
+
+                
+                if (dr.GetInt64(10) == 23)
+                {
+                    status = "In Progress";
+                }
+                else if (dr.GetInt64(10) == 16)
+                {
+                    status = "Delivered";
+                }
+                else {
+                    status = "Unknown";
+                }
+
+                if (dr.GetInt16(9) == 61)
+                {
+                    type = "Invoice";
+                }
+                else if (dr.GetInt16(9) == 55) {
+                    type = "Return";
+                }
+                else if (dr.GetInt16(9) == 96)
+                {
+                    type = "Exchange";
+                }
+                else if (dr.GetInt16(9) == 49)
+                {
+                    type = "Remake";
+                }
+
+                string[] row = new string[] { dr.GetInt16(1).ToString(), dr.GetString(2),  type, dr.GetString(5), status };
+                dataGridView1.Rows.Add(row);
+            }
+
+            OracleCommand cmd2 = new OracleCommand();
+            cmd2.CommandText = "select * from any_table";
+            cmd2.Parameters.Add("mrn", trim);
+            cmd2.Connection = con;
+            cmd2.CommandType = CommandType.Text;
+            OracleDataReader dr2 = cmd2.ExecuteReader();
+            if (!dr2.HasRows)
+            {
+                MessageBox.Show("No record found for " + textBox1.Text);
+            }
+            
+                while (dr2.Read())
+                {
+                    string str = dr2.GetOracleDate(29).ToString();
+                   int pos = dr2.GetOracleDate(29).ToString().IndexOf(" ");
+                    textBox2.Text = dr2.GetInt32(1).ToString();
+                    textBox5.Text = dr2.GetString(9);
+                    textBox8.Text = dr2.GetString(19);
+                    textBox9.Text = str.Substring(0,10);
+            }
+            
+            
+
+            OracleCommand cmd3 = new OracleCommand();
+            cmd3.CommandText = "select * from anytable";
+
+            cmd3.Parameters.Add("mrn",trim);
+            cmd3.Connection = con;
+            cmd3.CommandType = CommandType.Text;
+            OracleDataReader dr3 = cmd3.ExecuteReader();
+            dr3.Read();
+            
+
+            //test part 
+            if (dr3.HasRows)
+            {
+                comboBox3.Items.Add(dr3.GetString(2) + " - "+ dr3.GetString(3) + "          " + dr3.GetInt64(18));
+               
+                if (!dr3.IsDBNull(14))
+                { textBox6.Text = "R: " + dr3.GetString(14); }
+                else { textBox6.Text = "R: No prescription"; }
+
+                if (!dr3.IsDBNull(15))
+                { textBox7.Text = "L: " + dr3.GetString(15); }
+                else { textBox7.Text = "L: No prescription"; }
+
+                if (!dr3.IsDBNull(16))
+                { textBox49.Text = "R: " + dr3.GetString(16); }
+                else { textBox49.Text = "No barcode"; }
+
+                if (!dr3.IsDBNull(17))
+                { textBox50.Text = "L: " + dr3.GetString(17); }
+                else { textBox50.Text = "No barcode"; }
+
+                while (dr3.Read())
+                {
+                    comboBox3.Items.Add(dr3.GetString(2) + " - "+dr3.GetString(3) + "          " + dr3.GetInt64(18));
+                }
+                comboBox3.SelectedIndex = 0;
+            }
+            else
+            {
+                
+            }
+
+           
+
+           
+            
+
+            /*
+            if (dr3.HasRows)
+            {
+                textBox3.Text = dr3.GetString(3);
+                if (!dr3.IsDBNull(14))
+                { textBox6.Text = "R: " + dr3.GetString(14); }
+                else { textBox6.Text = "R: No prescription"; }
+
+                if (!dr3.IsDBNull(15))
+                { textBox7.Text = "L: " + dr3.GetString(15); }
+                else { textBox7.Text = "L: No prescription"; }
+
+                if (!dr3.IsDBNull(16))
+                { textBox49.Text = "R: " + dr3.GetString(16); }
+                else { textBox6.Text = "No barcode"; }
+
+                if (!dr3.IsDBNull(17))
+                { textBox50.Text = "L: " + dr3.GetString(17); }
+                else { textBox7.Text = "No barcode"; }
+
+            }
+            else
+            {
+                textBox3.Text = "No CL Prescription";
+            }
+            */
+            //end of test part
+
+
+            OracleCommand cmd4 = new OracleCommand();
+            cmd4.CommandText = "select * from anytable where column = :asd";
+            cmd4.Parameters.Add("asd",trim);
+            cmd4.Connection = con;
+            cmd4.CommandType = CommandType.Text;
+            OracleDataReader dr4 = cmd4.ExecuteReader();
+            dr4.Read();
+
+            if (dr4.HasRows)
+            {
+                comboBox4.Items.Add(dr4.GetString(1) + " - " + dr4.GetString(0));
+                while (dr4.Read())
+                {
+                    comboBox4.Items.Add(dr4.GetString(1)+" - "+ dr4.GetString(0));
+                }
+                //textBox4.Text = dr4.GetString(0);
+                comboBox4.SelectedIndex = 0;
+            }
+            else
+            {
+                
+            }
+
+            
+                
+            
+                
+
+           
+
+            
+
+           
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            
+        }
+
+        private void dataGridView1_CellContentDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            
+            dataGridView2.Rows.Clear();
+            
+            OdbcCommand cmd5 = new OdbcCommand();
+            odbcon.Open();
+            cmd5.CommandText = "select * from anytable where column = ?";
+            cmd5.Connection = odbcon;
+            cmd5.Parameters.Add("@bc", OdbcType.Int).Value = dataGridView1.Rows[e.RowIndex].Cells[0].Value;
+            OdbcDataReader dr5 = cmd5.ExecuteReader();
+            
+
+          
+
+            while (dr5.Read())
+            {
+                string[] row2 = new string[] { dr5.GetInt32(1).ToString(), dr5.GetString(6), dr5.GetString(2)+" "+dr5.GetString(3), dr5.GetString(5), dr5.GetString(4) };
+                dataGridView2.Rows.Add(row2);
+            }
+            odbcon.Close();
+
+
+            
+        }
+
+        private void label9_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            branch_details();
+            
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetText("Template1");
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetText("Hello,\n"
+                                +"Template2");
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox2_DoubleClick(object sender, EventArgs e)
+        {
+            
+              dataGridView2.Rows.Clear();
+           
+            OdbcCommand cmd6 = new OdbcCommand();
+            odbcon.Open();
+            cmd6.CommandText = "select * from anytable where column = ?";
+            cmd6.Connection = odbcon;
+            cmd6.Parameters.Add("@bc", OdbcType.Int).Value = textBox2.Text;
+            OdbcDataReader dr6 = cmd6.ExecuteReader();
+            //label8.Text = dataGridView1.Rows[e.RowIndex].Cells[0].Value.ToString();
+
+            while (dr6.Read())
+            {
+                
+                string[] row2 = new string[] { dr6.GetInt32(1).ToString(), dr6.GetString(6), dr6.GetString(2) + " " + dr6.GetString(3), dr6.GetString(5), dr6.GetString(4) };
+                dataGridView2.Rows.Add(row2);
+            }
+            odbcon.Close();
+            
+
+
+        }
+
+        private void label12_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox11_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            listView1.Items.Clear();
+
+            if (!String.IsNullOrEmpty(textBox10.Text) & !String.IsNullOrEmpty(textBox11.Text))
+            {
+                OracleConnection con = new OracleConnection();
+                con.ConnectionString = connectionString;
+                con.Open();
+                OracleCommand cmd = new OracleCommand();
+                cmd.CommandText = "select * from anytable where UPPER(first_name) like :fn and UPPER(surname) like :sn";
+                cmd.Parameters.Add("fn", "%" + textBox10.Text.ToUpper() + "%");
+                cmd.Parameters.Add("sn", "%" + textBox11.Text.ToUpper() + "%");
+                cmd.Connection = con;
+                cmd.CommandType = CommandType.Text;
+                OracleDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    ListViewItem lvi = new ListViewItem(dr.GetString(2));
+                    listView1.Items.Add(lvi);
+                }
+            }
+
+            else if (!String.IsNullOrEmpty(textBox12.Text) && String.IsNullOrEmpty(textBox10.Text))
+            {
+                OracleConnection con = new OracleConnection();
+                con.ConnectionString = connectionString;
+                con.Open();
+                OracleCommand cmd = new OracleCommand();
+                cmd.CommandText = "select * from anytable where mobile=:n1 or HOME_TELEPHONE=:n2 or WORK_TELEPHONE=:n3";
+                cmd.Parameters.Add("n1", textBox12.Text);
+                cmd.Parameters.Add("n2", textBox12.Text);
+                cmd.Parameters.Add("n3", textBox12.Text);
+                cmd.Connection = con;
+                cmd.CommandType = CommandType.Text;
+                OracleDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    ListViewItem lvi = new ListViewItem(dr.GetString(2));
+                    listView1.Items.Add(lvi);
+                }
+            }
+            else { MessageBox.Show("Please provide search values"); }
+        }
+        /*
+        private void listView1_MouseDoubleClick(object sender, EventArgs e)
+        {
+            label14.Text = "ASDASD";
+        }
+        */
+
+        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count > 0)
+            {
+                textBox1.Text = listView1.SelectedItems[0].Text;
+            }
+        }
+
+        private void tabPage2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void webBrowser3_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
+        {
+
+        }
+
+       // private void button7_Click(object sender, EventArgs e)
+       // {
+        //    webBrowser5.Navigate(textBox16.Text);
+       // }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            if (!String.IsNullOrEmpty(textBox13.Text) && !String.IsNullOrEmpty(comboBox1.Text))
+            {
+                int prcode;
+                if (int.Parse(this.comboBox1.GetItemText(this.comboBox1.Text).Substring(0, 3))== 999)
+                {
+                    prcode = 999;
+                }
+                else
+                prcode = int.Parse(this.comboBox1.GetItemText(this.comboBox1.Text).Substring(0, 5));
+
+                //string prcode2 = this.comboBox1.GetItemText(this.comboBox1.SelectedItem);
+
+                this.dataGridView3.Rows.Clear();
+                OracleConnection con = new OracleConnection();
+                con.ConnectionString = connectionString;
+                con.Open();
+                OracleCommand cmd = new OracleCommand();
+                cmd.CommandText = "select * from anytable"
+                                  + " where code = :bc and code2 = :prid"; 
+
+                cmd.Parameters.Add("bc", textBox13.Text);
+                cmd.Parameters.Add("prid", prcode);
+                cmd.Connection = con;
+                OracleDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    string avl = "";
+
+                    if (dr.GetInt16(9) == 0)
+                    {
+                        avl = "Unavailable";
+                    }
+                    else if (dr.GetInt16(9) == 1)
+                    {
+                        avl = "Available";
+                    }
+                    else
+                    {
+                        avl = "Unknown";
+                    }
+
+                    string[] row = new string[] { dr.GetInt64(0).ToString(), dr.GetString(1), dr.GetString(2), dr.GetDecimal(3).ToString(), dr.GetDecimal(4).ToString(), dr.GetString(5), dr.GetInt64(6).ToString(), dr.GetString(7), dr.GetInt16(8).ToString(), avl };
+                    dataGridView3.Rows.Add(row);
+                }
+                con.Close();
+            }
+            else if (!String.IsNullOrEmpty(textBox15.Text))
+            {
+                this.dataGridView3.Rows.Clear();
+                OracleConnection con = new OracleConnection();
+                con.ConnectionString = connectionString;
+                con.Open();
+                OracleCommand cmd = new OracleCommand();
+                cmd.CommandText = "select * from anytable"
+                                  + " where UPPER(it.item_name) like :inm"; 
+
+                cmd.Parameters.Add("inm", "%" + textBox15.Text.ToUpper() + "%");
+
+                cmd.Connection = con;
+                OracleDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    string avl = "";
+                    string itp = "";
+
+                    if (dr.GetInt16(9) == 0)
+                    {
+                        avl = "Unavailable";
+                    }
+                    else if (dr.GetInt16(9) == 1)
+                    {
+                        avl = "Available";
+                    }
+                    else
+                    {
+                        avl = "Unknown";
+                    }
+
+
+
+                    string[] row = new string[] { dr.GetInt64(0).ToString(), dr.GetString(1), dr.GetString(2), dr.GetDecimal(3).ToString(), dr.GetDecimal(4).ToString(), dr.GetString(5), dr.GetInt64(6).ToString(), dr.GetString(7), dr.GetInt16(8).ToString(), avl };
+                    dataGridView3.Rows.Add(row);
+                }
+                con.Close();
+
+            }
+            else
+            {
+                MessageBox.Show("Please provide search values");
+            }
+
+
+      }
+
+        private void textBox15_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void dataGridView3_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        //below is the enhancmenet
+        private void dataGridView3_CellContentDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+           
+            //label17.Text = dataGridView3.Rows[e.RowIndex].Cells[7].Value.ToString();
+            MessageBox.Show("asdasdasd");
+        }
+
+        private void dataGridView3_CellContentDoubleClick_1(object sender, DataGridViewCellEventArgs e) // this is to show detailed info of the product
+        {
+            string compare = dataGridView3.Rows[e.RowIndex].Cells[8].Value.ToString();
+            int cint = int.Parse(compare);
+            //int bcode = int.Parse(dataGridView3.Rows[e.RowIndex].Cells[5].Value.ToString());
+
+            if (cint == 1)
+            {
+
+                //label17.Text = "Execute Frame";
+            }
+            else if (cint == 2)
+            {
+                // label17.Text = "Execute Lens";
+                lens_panel.Visible = true;
+                cl_panel.Visible = false;
+                string icode = dataGridView3.Rows[e.RowIndex].Cells[6].Value.ToString();
+
+                OracleConnection con = new OracleConnection();
+                con.ConnectionString = connectionString;
+                con.Open();
+                OracleCommand cmd = new OracleCommand();
+                cmd.CommandText = "select * from anytable "
+                                    + " where id = :itid";
+                cmd.Parameters.Add("itid", icode);
+
+                cmd.Connection = con;
+
+
+                OracleDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    textBox42.Text = dataGridView3.Rows[e.RowIndex].Cells[1].Value.ToString();
+                    textBox41.Text = dataGridView3.Rows[e.RowIndex].Cells[7].Value.ToString();
+                    textBox40.Text = dataGridView3.Rows[e.RowIndex].Cells[5].Value.ToString();
+
+                    if (!dr.IsDBNull(0)) { textBox39.Text = dr.GetString(0); } else { textBox39.Text = " "; }
+                    if (!dr.IsDBNull(1)) { textBox38.Text = dr.GetString(1); } else { textBox38.Text = " "; }
+                    if (!dr.IsDBNull(2)) { textBox32.Text = dr.GetOracleDecimal(2).ToString(); } else { textBox32.Text = " "; }
+                    if (!dr.IsDBNull(3)) { textBox33.Text = dr.GetOracleDecimal(3).ToString(); } else { textBox33.Text = " "; }
+
+                    if (!dr.IsDBNull(4)) { textBox34.Text = dr.GetOracleDecimal(4).ToString(); } else { textBox34.Text = " "; }
+                    if (!dr.IsDBNull(5)) { textBox35.Text = dr.GetOracleDecimal(5).ToString(); } else { textBox35.Text = " "; }
+                    if (!dr.IsDBNull(6)) { textBox36.Text = dr.GetOracleDecimal(6).ToString(); } else { textBox36.Text = " "; }
+                    if (!dr.IsDBNull(7)) { textBox37.Text = dr.GetOracleDecimal(7).ToString(); } else { textBox37.Text = " "; }
+
+                    if (!dr.IsDBNull(8)) { textBox43.Text = dr.GetOracleDecimal(8).ToString(); } else { textBox43.Text = " "; }
+                    if (!dr.IsDBNull(9)) { textBox44.Text = dr.GetOracleDecimal(9).ToString(); } else { textBox44.Text = " "; }
+                    if (!dr.IsDBNull(10)) { textBox45.Text = dr.GetOracleDecimal(10).ToString(); } else { textBox45.Text = " "; }
+                    if (!dr.IsDBNull(11)) { textBox46.Text = dr.GetOracleDecimal(11).ToString(); } else { textBox46.Text = " "; }
+
+                    if (!dr.IsDBNull(12)) { textBox47.Text = dr.GetOracleDecimal(12).ToString(); } else { textBox47.Text = " "; }
+                    if (!dr.IsDBNull(13)) { textBox48.Text = dr.GetOracleDecimal(13).ToString(); } else { textBox48.Text = " "; }
+                    if (!dr.IsDBNull(14)) { textBox58.Text = dr.GetString(14).ToString(); } else { textBox58.Text = " "; }
+
+                    textBox31.Text = dataGridView3.Rows[e.RowIndex].Cells[3].Value.ToString();
+                    textBox30.Text = dataGridView3.Rows[e.RowIndex].Cells[4].Value.ToString();
+                    textBox29.Text = dataGridView3.Rows[e.RowIndex].Cells[9].Value.ToString();
+
+                }
+                con.Close();
+
+            }
+            else if (cint == 3)
+            {
+                //label17.Text = dataGridView3.Rows[e.RowIndex].Cells[5].Value.ToString(); //dataGridView3.Rows[e.RowIndex].Cells[5].Value.GetType().ToString();
+                cl_panel.Visible = true;
+                lens_panel.Visible = false;
+                string icode = dataGridView3.Rows[e.RowIndex].Cells[6].Value.ToString();
+
+                OracleConnection con = new OracleConnection();
+                con.ConnectionString = connectionString;
+                con.Open();
+                OracleCommand cmd = new OracleCommand();
+                cmd.CommandText = "select * from anytable "
+                    + " where TO_CHAR(id) = :itid";
+                cmd.Parameters.Add("itid", icode);
+
+                cmd.Connection = con;
+
+
+                OracleDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    textBox14.Text = dataGridView3.Rows[e.RowIndex].Cells[1].Value.ToString();
+                    textBox16.Text = dataGridView3.Rows[e.RowIndex].Cells[7].Value.ToString();
+                    textBox17.Text = dataGridView3.Rows[e.RowIndex].Cells[5].Value.ToString();
+
+                    if (!dr.IsDBNull(0)) { textBox18.Text = dr.GetString(0); } else { textBox18.Text = " "; }
+                    if (!dr.IsDBNull(1)) { textBox19.Text = dr.GetString(1); } else { textBox19.Text = " "; }
+                    if (!dr.IsDBNull(2)) { textBox20.Text = dr.GetOracleDecimal(2).ToString(); } else { textBox20.Text = " "; }//textBox20.Text = dr.GetString(2);
+                    if (!dr.IsDBNull(3)) { textBox21.Text = dr.GetOracleDecimal(3).ToString(); } else { textBox21.Text = " "; }  //textBox21.Text = dr.GetString(3);
+                    if (!dr.IsDBNull(4)) { textBox24.Text = dr.GetOracleDecimal(4).ToString(); } else { textBox24.Text = " "; }//textBox24.Text = dr.GetString(4);
+                    if (!dr.IsDBNull(5)) { textBox22.Text = dr.GetOracleDecimal(5).ToString(); } else { textBox22.Text = " "; }//textBox22.Text = dr.GetString(5);
+                    if (!dr.IsDBNull(6)) { textBox23.Text = dr.GetOracleDecimal(6).ToString(); } else { textBox23.Text = " "; }//textBox23.Text = dr.GetString(6);
+                    if (!dr.IsDBNull(7)) { textBox25.Text = dr.GetOracleDecimal(7).ToString(); } else { textBox25.Text = " "; } // textBox25.Text = dr.GetString(7);
+                    if (!dr.IsDBNull(8)) { textBox56.Text = dr.GetString(8).ToString(); } else { textBox56.Text = " "; }
+                    if (!dr.IsDBNull(9)) { textBox57.Text = dr.GetString(9).ToString(); } else { textBox57.Text = " "; }
+
+                    textBox26.Text = dataGridView3.Rows[e.RowIndex].Cells[3].Value.ToString();
+                    textBox27.Text = dataGridView3.Rows[e.RowIndex].Cells[4].Value.ToString();
+                    textBox28.Text = dataGridView3.Rows[e.RowIndex].Cells[9].Value.ToString();
+
+                }
+                con.Close();
+            }
+            else
+            {
+                //label17.Text = "Do nothing";
+            }
+            
+        }
+
+        private void label25_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox20_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetText("Hello,\n"
+                                + "Can you please help with order below.\n"
+                                + "\nregards,"
+                                + "\nGaziz");
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            basic_search.Visible = false;
+            advanced_search.Visible = true;
+        }
+
+        private void button10_Click(object sender, EventArgs e)
+        {
+            basic_search.Visible = true;
+            advanced_search.Visible = false;
+        }
+
+
+        //*********************** BELOW IS ADVANCED SEARCH 10/20 ********************************
+        private void button9_Click(object sender, EventArgs e)
+        {
+            if (!String.IsNullOrEmpty(comboBox2.Text) && !String.IsNullOrEmpty(textBox53.Text) && !String.IsNullOrEmpty(textBox54.Text) && !String.IsNullOrEmpty(textBox54.Text))
+            {
+
+                int prcode = int.Parse(this.comboBox2.GetItemText(this.comboBox2.Text).Substring(0, 5));
+                //string prcode2 = this.comboBox1.GetItemText(this.comboBox1.SelectedItem);
+
+                this.dataGridView3.Rows.Clear();
+                OracleConnection con = new OracleConnection();
+                con.ConnectionString = connectionString;
+
+                con.Open();
+                OracleCommand cmd = new OracleCommand();
+                cmd.CommandText = "select * from anytable "
+                            + " where a1 = :base and a2 = :diameter and a3 = :sphere and NVL(a4, 777) = :cylinder  and NVL(a5,777) = :axis and a6 = :practice"
+                            + " order by a7";
+
+                cmd.Parameters.Add("base", System.Convert.ToDecimal(textBox55.Text));
+                cmd.Parameters.Add("diameter", System.Convert.ToDecimal(textBox53.Text));
+                cmd.Parameters.Add("sphere", System.Convert.ToDecimal(textBox54.Text));
+
+                if (!String.IsNullOrEmpty(textBox51.Text))
+                { cmd.Parameters.Add("cylinder", System.Convert.ToDecimal(textBox51.Text)); }
+                else { cmd.Parameters.Add("cylinder", 777); }
+
+                if (!String.IsNullOrEmpty(textBox52.Text)) { cmd.Parameters.Add("axis", System.Convert.ToDecimal(textBox52.Text)); }
+                else { cmd.Parameters.Add("axis", 777); }
+
+                cmd.Parameters.Add("practice", prcode);
+
+
+                cmd.Connection = con;
+                OracleDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    string avl = "";
+
+                    if (dr.GetInt16(9) == 0)
+                    {
+                        avl = "Unavailable";
+                    }
+                    else if (dr.GetInt16(9) == 1)
+                    {
+                        avl = "Available";
+                    }
+                    else
+                    {
+                        avl = "Unknown";
+                    }
+
+                    string[] row = new string[] { dr.GetInt64(0).ToString(), dr.GetString(1), dr.GetString(2), dr.GetDecimal(3).ToString(), dr.GetDecimal(4).ToString(), dr.GetString(5), dr.GetInt64(6).ToString(), dr.GetString(7), dr.GetInt16(8).ToString(), avl };
+                    dataGridView3.Rows.Add(row);
+                }
+                con.Close();
+            }
+
+            else if (!String.IsNullOrEmpty(comboBox2.Text) && !String.IsNullOrEmpty(textBox59.Text))
+            {
+                int prcode = int.Parse(this.comboBox2.GetItemText(this.comboBox2.Text).Substring(0, 5));
+                //string prcode2 = this.comboBox1.GetItemText(this.comboBox1.SelectedItem);
+
+                this.dataGridView3.Rows.Clear();
+                OracleConnection con = new OracleConnection();
+                con.ConnectionString = connectionString;
+
+                con.Open();
+                OracleCommand cmd = new OracleCommand();
+                cmd.CommandText = "select * from anytable "
+                            + " where UPPER(make) like :model and id = :practice"
+                            + " order by a4"; 
+
+                                cmd.Parameters.Add("model", textBox59.Text.ToUpper());
+                                cmd.Parameters.Add("practice", prcode);
+
+
+                cmd.Connection = con;
+                OracleDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    string avl = "";
+
+                    if (dr.GetInt16(9) == 0)
+                    {
+                        avl = "Unavailable";
+                    }
+                    else if (dr.GetInt16(9) == 1)
+                    {
+                        avl = "Available";
+                    }
+                    else
+                    {
+                        avl = "Unknown";
+                    }
+
+                    string[] row = new string[] { dr.GetInt64(0).ToString(), dr.GetString(1), dr.GetString(2), dr.GetDecimal(3).ToString(), dr.GetDecimal(4).ToString(), dr.GetString(5), dr.GetInt64(6).ToString(), dr.GetString(7), dr.GetInt16(8).ToString(), avl };
+                    dataGridView3.Rows.Add(row);
+                }
+                con.Close();
+            }
+
+            else
+            {
+                MessageBox.Show("Please provide search values");
+            }
+
+
+
+        }
+
+        private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var str1 = this.comboBox3.GetItemText(this.comboBox3.SelectedItem);
+            string presid = str1.Substring(str1.Length - 15);
+
+
+            //this is test
+            OracleConnection con = new OracleConnection();
+            con.ConnectionString = connectionString;
+            OracleCommand cmd3 = new OracleCommand();
+            cmd3.CommandText = "select *  "
+                + "from talbe1 prc "
+                + " LEFT JOIN table2 cl on prc.R_CL_ITEM_ID = cl.item_id left join table3S it on cl.item_id = it.item_id "
+                + " LEFT table4 cl2 on prc.L_CL_ITEM_ID = cl2.item_id left join table5 it2 on cl2.item_id = it2.item_id "
+                + " where TO_CHAR(prc.record_id) = :asd";
+
+            cmd3.Parameters.Add("asd", presid);
+            cmd3.Connection = con;
+            con.Open();
+            cmd3.CommandType = CommandType.Text;
+            OracleDataReader dr3 = cmd3.ExecuteReader();
+            dr3.Read();
+
+
+            //test part 
+            if (dr3.HasRows)
+            {
+                //comboBox3.Items.Add(dr3.GetString(2) + " - " + dr3.GetString(3) + "          " + dr3.GetInt64(18));
+                
+                if (!dr3.IsDBNull(14))
+                { textBox6.Text = "R: " + dr3.GetString(14); }
+                else { textBox6.Text = "R: No prescription"; }
+
+                if (!dr3.IsDBNull(15))
+                { textBox7.Text = "L: " + dr3.GetString(15); }
+                else { textBox7.Text = "L: No prescription"; }
+
+                if (!dr3.IsDBNull(16))
+                { textBox49.Text = "R: " + dr3.GetString(16); }
+                else { textBox49.Text = "No barcode"; }
+
+                if (!dr3.IsDBNull(17))
+                { textBox50.Text = "L: " + dr3.GetString(17); }
+                else { textBox50.Text = "No barcode"; }
+
+                while (dr3.Read())
+                {
+                    comboBox3.Items.Add(dr3.GetString(2) + " - " + dr3.GetString(3) + "          " + dr3.GetInt64(18));
+                }
+            }
+            else
+            {
+                
+            }
+            con.Close();
+
+            //end of test
+
+        }
+
+        private void tabPage5_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        public static string getBetween(string strSource, string strStart, string strEnd)
+        {
+            int Start, End;
+            if (strSource.Contains(strStart) && strSource.Contains(strEnd))
+            {
+                Start = strSource.IndexOf(strStart, 0) + strStart.Length;
+                End = strSource.IndexOf(strEnd, Start);
+                return strSource.Substring(Start, End - Start);
+            }
+            else
+            {
+                return "";
+            }
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+            if (textBox60.TextLength == 12)
+            {
+
+                richTextBox1.Clear();
+                textBox3.Text = "";
+                textBox4.Text = "";
+                textBox61.Text = "";
+                comboBox5.Items.Clear();
+                OracleConnection con = new OracleConnection();
+                string mma = '%' + textBox60.Text + '%';
+                int id = 1;
+
+                if (radioButton1.Checked)
+                {
+                    id = 1;
+                }
+
+                else if (radioButton2.Checked)
+                {
+                    id = 3;
+                }
+
+                else if (radioButton3.Checked)
+                {
+                    id = 2;
+                }
+                else if (radioButton4.Checked)
+                {
+                    id = 4;
+                }
+
+                con.ConnectionString = connectionString;
+                OracleCommand cmd7 = new OracleCommand();
+                String query1 = "select * from anytable where MESSAGE_TEXT like :dsa and message_status = :id";
+
+                cmd7.CommandText = query1;
+
+                cmd7.Parameters.Add("dsa", mma);
+                cmd7.Parameters.Add("id", id);
+                cmd7.Connection = con;
+                con.Open();
+                cmd7.CommandType = CommandType.Text;
+                OracleDataReader dr7 = cmd7.ExecuteReader();
+                dr7.Read();
+
+                string text = "asd";
+
+
+                if (dr7.HasRows)
+                {
+                    comboBox5.Items.Add(dr7.GetInt64(2).ToString());
+                }
+                else { MessageBox.Show("No data was found for " + textBox60.Text + " under " + id + " status"); }
+                while (dr7.Read())
+                {
+
+                    comboBox5.Items.Add(dr7.GetInt64(2).ToString());
+                    comboBox5.SelectedIndex = 0;
+                }
+                
+
+                ////test start
+
+
+
+                /////test end 55
+
+
+                con.Close();
+            }
+
+            else
+                MessageBox.Show("Please provide MRN including 1100");
+    }
+
+        private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox5_SelectedIndexChanged(object sender, EventArgs e)
+
+        {
+
+            richTextBox1.Clear();
+            textBox3.Text = "";
+            textBox4.Text = "";
+            textBox61.Text = "";
+            var hl7id = this.comboBox5.GetItemText(this.comboBox5.SelectedItem);
+            OracleConnection con = new OracleConnection();
+
+            int id = 1;
+
+            if (radioButton1.Checked)
+            {
+                id = 1;
+            }
+
+            else if (radioButton2.Checked)
+            {
+                id = 3;
+            }
+
+            else if (radioButton3.Checked)
+            {
+                id = 2;
+            }
+            else if (radioButton4.Checked)
+            {
+                id = 4;
+            }
+
+            con.ConnectionString = connectionString;
+            OracleCommand cmd7 = new OracleCommand();
+            
+
+            cmd7.CommandText = "select * anytable where HL7_MESSAGE_ID = :id";
+
+            cmd7.Parameters.Add("mrn", hl7id);
+            
+            cmd7.Connection = con;
+            con.Open();
+            cmd7.CommandType = CommandType.Text;
+            OracleDataReader dr7 = cmd7.ExecuteReader();
+            dr7.Read();
+            string text = "";
+            if (dr7.HasRows)
+            {
+
+                richTextBox1.Text = dr7.GetString(8);
+                text = dr7.GetString(8);
+                string[] separatingStrings = { "\r\n", "\r", "\n" };
+                string[] separatingStrings2 = { "||", "^" };
+                string[] separatingStrings3 = { "||" };
+                string[] separatingStrings4 = { "^" };
+
+                string[] words = text.Split(separatingStrings, System.StringSplitOptions.RemoveEmptyEntries);
+
+                string doc = words[3];
+                string fio = words[2];
+
+                string[] words2 = doc.Split(separatingStrings2, System.StringSplitOptions.RemoveEmptyEntries);
+                string[] words3 = fio.Split(separatingStrings3, System.StringSplitOptions.RemoveEmptyEntries);
+                string[] words4 = words3[2].Split(separatingStrings4, System.StringSplitOptions.RemoveEmptyEntries);
+
+                textBox4.Text = words2[4] + ", " + words2[5] + ", " + words2[6];
+
+                string name = "";
+
+                foreach (var word in words4)
+                {
+                    name = name + word + ", ";
+                }
+
+                textBox3.Text = name;
+
+                foreach (var word in words)
+                {
+                    if (word.Contains("expiration date"))
+                    {
+
+                        string[] separatingStrings5 = { "|" };
+                        string[] words5 = word.Split(separatingStrings5, System.StringSplitOptions.RemoveEmptyEntries);
+                        textBox61.Text = words5[5];
+
+                    }
+                    //textBox61.Text = getBetween(word, "expiration date", "||||||||||||||||||||");
+                }
+            }
+        }
+
+        private void button12_Click(object sender, EventArgs e)
+        {
+
+            DbProviderFactory factory = DbProviderFactories.GetFactory("Oracle.ManagedDataAccess.Client");
+            
+                try
+                {
+                    using (DbConnection conn = factory.CreateConnection())
+                    {
+                        conn.ConnectionString = connectionString;
+                        conn.Open();
+                    
+                    using (DbCommand cmd = conn.CreateCommand())
+                        {
+                            cmd.CommandText = "ALTER USER A016954IT ACCOUNT UNLOCK;";
+                            cmd.ExecuteNonQuery();
+                            
+                        }
+                    MessageBox.Show(" has been unlcoked");
+                    conn.Close();
+                    }
+                }
+                
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                }
+            /*
+               OracleConnection con = new OracleConnection();
+               con.ConnectionString = connectionString;
+               con.Open();
+               OracleCommand cmd8 = new OracleCommand();
+               //cmd8.CommandType = CommandType.Text;
+               cmd8.CommandText = "ALTER USER A016954IT ACCOUNT UNLOCK";
+               string user = textBox62.Text;
+               //cmd8.Parameters.Add("nuid", user);
+               cmd8.ExecuteNonQuery();
+
+                
+               int ir=0;
+               try
+               {
+                   ir = cmd8.ExecuteNonQuery();
+                   if (ir == -1)
+                   {
+                       MessageBox.Show(user + " has been unlcoked");
+                   }
+                   else { MessageBox.Show(user + " was not found"); }
+               }
+               catch (Exception ex)
+               {
+
+                   MessageBox.Show(ex.Message+" "+cmd8.CommandText.ToString());
+               }
+               
+                     
+            con.Close();
+             */
+
+        }
+
+        private void textBox62_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+    }
+}
